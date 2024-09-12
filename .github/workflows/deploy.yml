@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy to Server
 
 on:
   push:
@@ -23,9 +23,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Deploy to Heroku
-      uses: akshnz/heroku-deploy-action@v1.2
+    - name: Deploy to remote server
+      uses: appleboy/ssh-action@v0.1.6
       with:
-        api_key: ${{ secrets.HEROKU_API_KEY }}
-        app_name: your-heroku-app-name
-        branch: main
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          cd /path/to/your/project
+          git pull origin main
+          pip install -r requirements.txt
+          streamlit run app.py --server.port 8501 --server.enableCORS false
