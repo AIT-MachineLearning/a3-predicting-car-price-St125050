@@ -28,6 +28,4 @@ jobs:
 
     - name: Run tests
       run: |
-        # Assuming you have tests defined; add commands to run them here.
-        # Example: pytest
         echo "No tests defined"
