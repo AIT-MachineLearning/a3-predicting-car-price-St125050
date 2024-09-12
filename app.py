@@ -5,7 +5,7 @@ import pickle
 from sklearn.preprocessing import StandardScaler
 
 # Load the trained model and scaler
-with open('Logistic_Regression_Model.pkl', 'rb') as file:
+with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
     model = pickle.load(file)
 
 # If using scaling, load the scaler as well
