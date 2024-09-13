@@ -51,9 +51,10 @@ jobs:
         echo "$SSH_PRIVATE_KEY" > private_key.pem
         chmod 600 private_key.pem
 
-        ssh -i private_key.pem $REMOTE_USER@$REMOTE_HOST << 'EOF'
+        # Add SSH options to prevent issues
+        ssh -o StrictHostKeyChecking=no -i private_key.pem $REMOTE_USER@$REMOTE_HOST << 'EOF'
           docker pull st125050/a3car:latest
           docker stop a3car-container || true
           docker rm a3car-container || true
-          docker run -d -p 8501:8501 --name a3car-container st125050/a3car:latest
+          docker run -d -p 8505:8505 --name a3car-container st125050/a3car:latest
         EOF
