@@ -2,7 +2,9 @@ import pytest
 import pickle
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import RidgeClassifier  # or whatever classifier you used
+from sklearn.linear_model import RidgeClassifier
+from mainfile import RidgeLogisticRegression
+# or whatever classifier you used
 
 # Load the Ridge Logistic Regression model and scaler
 with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
