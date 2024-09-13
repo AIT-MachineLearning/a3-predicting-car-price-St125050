@@ -13,16 +13,13 @@ services:
       # Allow Traefik to talk with your service
       - traefik.enable=true
       # Tell Traefik to use port 8505
-      - traefik.http.services.streamlit_app.loadbalancer.server.port=8505
+      - traefik.http.services.a3carapp-st125050.loadbalancer.server.port=8505
       # This configures your domain name
-      - traefik.http.routers.streamlit_app.rule=Host(yourdomain.com)  # Replace with your actual domain
+      - traefik.http.routers.a3carapp-st125050.rule=Host(st125050.ml.brain.cs.ait.ac.th)  # Replace with your actual domain
       # Enable SSL
-      - traefik.http.routers.streamlit_app.tls=true
-      - traefik.http.routers.streamlit_app.tls.certresolver=production
-      - traefik.http.routers.streamlit_app.entrypoints=websecure
-    networks:
-      - default
-      - traefik_default
+      - traefik.http.routers.a3carapp-st125050.tls=true
+      - traefik.http.routers.a3carapp-st125050.tls.certresolver=production
+      - traefik.http.routers.a3carapp-st125050.entrypoints=websecure
 
 networks:
   default:
