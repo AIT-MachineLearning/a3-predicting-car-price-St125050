@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import pickle
 from sklearn.preprocessing import StandardScaler
 
@@ -8,9 +7,9 @@ from sklearn.preprocessing import StandardScaler
 with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
     ridge_model = pickle.load(file)
 
-# Ideally, you should load the scaler used during model training
-# For this example, we're initializing a new scaler, which may not have the same parameters
-scaler = StandardScaler()
+# Load the scaler used during model training
+with open('scaler.pkl', 'rb') as file:
+    scaler = pickle.load(file)
 
 def preprocess_data(data):
     """Preprocess the input data."""
@@ -28,11 +27,11 @@ def preprocess_data(data):
     })
     
     # Extract features and scale
-    features = ['mileage', 'engine', 'max_power', 'km_driven', 'seats']
+    features = ['name', 'mileage', 'engine', 'max_power', 'km_driven', 'seats', 'fuel', 'transmission', 'seller_type', 'owner']
     X = data[features]
     
-    # Scale the features (make sure scaler is fitted with training data in a real scenario)
-    X_scaled = scaler.fit_transform(X)  # Use the actual scaler fitted on training data
+    # Scale the features
+    X_scaled = scaler.transform(X)  # Use the actual scaler fitted on training data
     return X_scaled
 
 def predict(data):
