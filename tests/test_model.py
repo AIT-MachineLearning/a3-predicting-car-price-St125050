@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 import pickle
 from sklearn.preprocessing import StandardScaler
-from streamlit_app import preprocess_data, predict  # Adjust import based on file structure
+from app import preprocess_data, predict  # Adjust import based on file structure
 
 class TestCarPricePrediction(unittest.TestCase):
 
