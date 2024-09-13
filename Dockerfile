@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code and model file into the container
 COPY app.py ./
 COPY Ridge_Logistic_Regression_Model.pkl ./
+COPY scaler.pkl ./
 
 # Expose the port that Streamlit will run on
 EXPOSE 8505
