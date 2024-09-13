@@ -3,13 +3,19 @@ import pandas as pd
 import pickle
 from sklearn.preprocessing import StandardScaler
 
-# Load the Ridge Logistic Regression model
-with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
-    ridge_model = pickle.load(file)
-
-# Load the scaler used during model training
-with open('scaler.pkl', 'rb') as file:
-    scaler = pickle.load(file)
+# Load the Ridge Logistic Regression model and scaler
+try:
+    with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
+        ridge_model = pickle.load(file)
+    
+    with open('scaler.pkl', 'rb') as file:
+        scaler = pickle.load(file)
+except FileNotFoundError as e:
+    st.error(f"Model or scaler file not found: {e}")
+    st.stop()
+except Exception as e:
+    st.error(f"Error loading model or scaler: {e}")
+    st.stop()
 
 def preprocess_data(data):
     """Preprocess the input data."""
@@ -26,19 +32,29 @@ def preprocess_data(data):
         'Ambassador': 28, 'Ashok': 29, 'Isuzu': 30, 'Opel': 31
     })
     
+    # Ensure that there are no NaN values
+    data = data.fillna(0)
+
     # Extract features and scale
     features = ['name', 'mileage', 'engine', 'max_power', 'km_driven', 'seats', 'fuel', 'transmission', 'seller_type', 'owner']
     X = data[features]
     
-    # Scale the features
-    X_scaled = scaler.transform(X)  # Use the actual scaler fitted on training data
+    try:
+        X_scaled = scaler.transform(X)  # Use the actual scaler fitted on training data
+    except Exception as e:
+        st.error(f"Error during scaling: {e}")
+        return None
+    
     return X_scaled
 
 def predict(data):
     """Predict using the Ridge Logistic Regression model."""
     try:
         X_scaled = preprocess_data(data)
-        return ridge_model.predict(X_scaled)
+        if X_scaled is not None:
+            return ridge_model.predict(X_scaled)
+        else:
+            return [None]
     except Exception as e:
         st.error(f"Error in prediction: {e}")
         return [None]
