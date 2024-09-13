@@ -23,6 +23,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Build Docker image
+      run: |
+        docker build -t st125050/a3car:latest .
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Push Docker image
+      run: |
+        docker push st125050/a3car:latest
+
     - name: Deploy to remote server
       uses: appleboy/ssh-action@v0.1.6
       with:
@@ -31,6 +45,7 @@ jobs:
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
           cd /path/to/your/project
-          git pull origin main
-          pip install -r requirements.txt
-          streamlit run app.py --server.port 8501 --server.enableCORS false
+          docker pull st125050/a3car:latest
+          docker stop a3car || true
+          docker rm a3car || true
+          docker run -d --name a3car -p 8501:8501 st125050/a3car:latest
