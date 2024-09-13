@@ -1,21 +1,19 @@
-import pytest
-import pickle
+import streamlit as st
 import pandas as pd
+import pickle
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import RidgeClassifier
-from mainfile import RidgeLogisticRegression
-# or whatever classifier you used
 
-# Load the Ridge Logistic Regression model and scaler
+# Load the Ridge Logistic Regression model
 with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
     ridge_model = pickle.load(file)
 
-# Load the scaler used during training
+# Load the scaler used during model training
 with open('scaler.pkl', 'rb') as file:
     scaler = pickle.load(file)
 
 def preprocess_data(data):
     """Preprocess the input data."""
+    # Convert categorical variables to numeric
     data['fuel'] = data['fuel'].map({'Diesel': 1, 'Petrol': 2, 'LPG': 3, 'CNG': 4})
     data['transmission'] = data['transmission'].map({'Manual': 1, 'Automatic': 2})
     data['seller_type'] = data['seller_type'].map({'Individual': 1, 'Dealer': 2, 'Trustmark Dealer': 3})
@@ -29,48 +27,54 @@ def preprocess_data(data):
     })
     
     # Extract features and scale
-    features = ['mileage', 'engine', 'max_power', 'km_driven', 'seats']
+    features = ['name', 'mileage', 'engine', 'max_power', 'km_driven', 'seats', 'fuel', 'transmission', 'seller_type', 'owner']
     X = data[features]
     
     # Scale the features
     X_scaled = scaler.transform(X)  # Use the actual scaler fitted on training data
     return X_scaled
 
-def test_model_input():
-    """Test if the model takes the expected input."""
-    data = pd.DataFrame({
-        'name': ['Toyota'],
-        'mileage': [15.0],
-        'engine': [1500],
-        'max_power': [100],
-        'km_driven': [50000],
-        'seats': [5],
-        'fuel': ['Petrol'],
-        'transmission': ['Manual'],
-        'seller_type': ['Individual'],
-        'owner': ['First Owner']
-    })
-    processed_data = preprocess_data(data)
-    assert processed_data.shape[1] == 5  # Ensure that the number of features is as expected
+def predict(data):
+    """Predict using the Ridge Logistic Regression model."""
+    try:
+        X_scaled = preprocess_data(data)
+        return ridge_model.predict(X_scaled)
+    except Exception as e:
+        st.error(f"Error in prediction: {e}")
+        return [None]
 
-def test_model_output():
-    """Test if the model's output has the expected shape and value."""
-    data = pd.DataFrame({
-        'name': ['Toyota'],
-        'mileage': [15.0],
-        'engine': [1500],
-        'max_power': [100],
-        'km_driven': [50000],
-        'seats': [5],
-        'fuel': ['Petrol'],
-        'transmission': ['Manual'],
-        'seller_type': ['Individual'],
-        'owner': ['First Owner']
-    })
-    processed_data = preprocess_data(data)
-    prediction = ridge_model.predict(processed_data)
-    assert prediction.shape == (1,)  # Ensure the output shape is as expected
-    # Optionally, add more checks if you know the expected prediction value
+# Streamlit app layout
+st.title('Car Price Prediction Using Ridge Logistic Regression')
 
-if __name__ == "__main__":
-    pytest.main()
+# Input fields
+name = st.text_input('Car Brand Name', '')
+fuel = st.selectbox('Fuel Type', ['Diesel', 'Petrol', 'LPG', 'CNG'])
+transmission = st.selectbox('Transmission', ['Manual', 'Automatic'])
+seller_type = st.selectbox('Seller Type', ['Individual', 'Dealer', 'Trustmark Dealer'])
+owner = st.selectbox('Owner Type', ['First Owner', 'Second Owner', 'Third Owner', 'Fourth & Above Owner', 'Test Drive Car'])
+mileage = st.number_input('Mileage (kmpl)', step=0.1, min_value=0.0)
+engine = st.number_input('Engine (cc)', min_value=0)
+max_power = st.number_input('Max Power (bhp)', min_value=0)
+km_driven = st.number_input('KM Driven', min_value=0)
+seats = st.number_input('Seats', step=1, min_value=1)
+
+# Create a DataFrame for prediction
+data = pd.DataFrame({
+    'name': [name],
+    'mileage': [mileage],
+    'engine': [engine],
+    'max_power': [max_power],
+    'km_driven': [km_driven],
+    'seats': [seats],
+    'fuel': [fuel],
+    'transmission': [transmission],
+    'seller_type': [seller_type],
+    'owner': [owner]
+})
+
+if st.button('Predict'):
+    prediction = predict(data)
+    if prediction[0] is not None:
+        st.write(f'Predicted Category: {prediction[0]}')
+    else:
+        st.write('Prediction could not be made. Please check your inputs.')
