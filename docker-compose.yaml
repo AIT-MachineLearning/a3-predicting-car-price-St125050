@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  streamlit_app:
+    image: st125050/a3car:latest  # Replace with your actual Docker image name
+    command: streamlit run app.py --server.port=8505  # Ensure this matches the EXPOSE port in Dockerfile
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8505
+    ports:
+      - "8505:8505"
+    labels:
+      # Allow Traefik to talk with your service
+      - traefik.enable=true
+      # Tell Traefik to use port 8505
+      - traefik.http.services.streamlit_app.loadbalancer.server.port=8505
+      # This configures your domain name
+      - traefik.http.routers.streamlit_app.rule=Host(yourdomain.com)  # Replace with your actual domain
+      # Enable SSL
+      - traefik.http.routers.streamlit_app.tls=true
+      - traefik.http.routers.streamlit_app.tls.certresolver=production
+      - traefik.http.routers.streamlit_app.entrypoints=websecure
+    networks:
+      - default
+      - traefik_default
+
+networks:
+  default:
+  traefik_default:
+    external: true
