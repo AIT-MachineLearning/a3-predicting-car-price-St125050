@@ -15,7 +15,7 @@ COPY app.py ./
 COPY Ridge_Logistic_Regression_Model.pkl ./
 
 # Expose the port that Streamlit will run on
-EXPOSE 8501
+EXPOSE 8505
 
 # Command to run the Streamlit app
 CMD ["streamlit", "run", "app.py"]
