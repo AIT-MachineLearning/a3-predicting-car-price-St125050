@@ -2,13 +2,15 @@ import pytest
 import pickle
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import RidgeClassifier  # or whatever classifier you used
 
 # Load the Ridge Logistic Regression model and scaler
 with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
     ridge_model = pickle.load(file)
 
-# Ideally, you should load the scaler used during model training
-scaler = StandardScaler()
+# Load the scaler used during training
+with open('scaler.pkl', 'rb') as file:
+    scaler = pickle.load(file)
 
 def preprocess_data(data):
     """Preprocess the input data."""
@@ -29,7 +31,7 @@ def preprocess_data(data):
     X = data[features]
     
     # Scale the features
-    X_scaled = scaler.fit_transform(X)  # Use the actual scaler fitted on training data
+    X_scaled = scaler.transform(X)  # Use the actual scaler fitted on training data
     return X_scaled
 
 def test_model_input():
@@ -50,7 +52,7 @@ def test_model_input():
     assert processed_data.shape[1] == 5  # Ensure that the number of features is as expected
 
 def test_model_output():
-    """Test if the model's output has the expected shape."""
+    """Test if the model's output has the expected shape and value."""
     data = pd.DataFrame({
         'name': ['Toyota'],
         'mileage': [15.0],
@@ -66,6 +68,7 @@ def test_model_output():
     processed_data = preprocess_data(data)
     prediction = ridge_model.predict(processed_data)
     assert prediction.shape == (1,)  # Ensure the output shape is as expected
+    # Optionally, add more checks if you know the expected prediction value
 
 if __name__ == "__main__":
     pytest.main()
