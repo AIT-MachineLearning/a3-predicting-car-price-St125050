@@ -19,4 +19,4 @@ COPY mainfile.py ./
 EXPOSE 8505
 
 # Command to run the Streamlit app
-CMD ["streamlit", "run", "app.py"]
+CMD ["streamlit", "run", "app.py", "--server.port=8505"]
