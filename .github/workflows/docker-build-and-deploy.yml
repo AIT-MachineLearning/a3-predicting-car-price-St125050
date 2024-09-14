@@ -25,7 +25,6 @@ jobs:
 
       - name: Build Docker image
         run: |
-          cd st125050-a3car
           docker build -t st125050/a3car:latest .
 
       - name: Log in to Docker Hub
