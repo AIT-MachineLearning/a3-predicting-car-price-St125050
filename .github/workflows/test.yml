@@ -23,6 +23,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Install additional dependencies
+      run: |
+        pip install numpy pandas scikit-learn mlflow streamlit  # Add any additional dependencies if needed
+
+    - name: Prepare test data
+      run: |
+        mkdir -p tests
+        # Place any required model files or other necessary files in the 'tests' directory
+        # This is an example and may need to be adapted based on your project structure
+
     - name: Run unit tests
       run: |
-        python -m unittest discover -s tests -p "*.py"
+        python -m unittest discover -s tests -p "*.py"  # Replace with 'pytest' if using pytest
