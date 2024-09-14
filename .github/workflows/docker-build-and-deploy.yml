@@ -25,7 +25,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          
+          cd st125050-a3car
           docker build -t st125050/a3car:latest .
 
       - name: Log in to Docker Hub
@@ -51,7 +51,9 @@ jobs:
         run: |
           echo "$SSH_PRIVATE_KEY" > temporary_key
           chmod 600 temporary_key
-          ssh -i temporary_key $REMOTE_USER@$REMOTE_HOST << 'EOF'
+
+          # Ensure the remote host is reachable and has SSH running
+          ssh -o StrictHostKeyChecking=no -i temporary_key $REMOTE_USER@$REMOTE_HOST << 'EOF'
             # Navigate to the directory with the Dockerfile
             cd st125050-a3car
 
@@ -73,4 +75,5 @@ jobs:
               exit 1
             fi
           EOF
+
           rm -f temporary_key
