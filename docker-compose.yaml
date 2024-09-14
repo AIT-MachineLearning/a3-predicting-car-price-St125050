@@ -15,7 +15,7 @@ services:
       # Tell Traefik to use port 8505
       - traefik.http.services.a3carapp-st125050.loadbalancer.server.port=8505
       # This configures your domain name
-      - traefik.http.routers.a3carapp-st125050.rule=Host(st125050.ml.brain.cs.ait.ac.th)  # Replace with your actual domain
+      - traefik.http.routers.a3carapp-st125050.rule=Host(`app3.st125050.ml.brain.cs.ait.ac.th`)  # Ensure this domain matches your DNS settings
       # Enable SSL
       - traefik.http.routers.a3carapp-st125050.tls=true
       - traefik.http.routers.a3carapp-st125050.tls.certresolver=production
