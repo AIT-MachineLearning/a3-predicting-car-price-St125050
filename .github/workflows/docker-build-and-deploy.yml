@@ -24,7 +24,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build Docker image
-        run: docker build -t st125050/a3car:latest .
+        run: |
+          cd st125050-a3car
+          docker build -t st125050/a3car:latest .
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -40,33 +42,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Generate temporary SSH keypair
-        id: generate_temp_key
-        run: |
-          ssh-keygen -t rsa -b 4096 -m PEM -C "temporary_deployment_key" -q -N "" -f temporary_key
-          echo "PUBLIC_KEY<<EOF" >> $GITHUB_ENV
-          cat temporary_key.pub >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          echo "PRIVATE_KEY<<EOF" >> $GITHUB_ENV
-          cat temporary_key >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Add public key to server
-        env:
-          SSH_PUBLIC_KEY: ${{ env.PUBLIC_KEY }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-        run: |
-          echo "$SSH_PUBLIC_KEY" | ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys'
-
       - name: Deploy application
         env:
-          SSH_PRIVATE_KEY: ${{ env.PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
         run: |
           echo "$SSH_PRIVATE_KEY" > temporary_key
           chmod 600 temporary_key
-          scp -i temporary_key my_application.tar.gz $REMOTE_USER@$REMOTE_HOST:/path/to/target
-          ssh -i temporary_key $REMOTE_USER@$REMOTE_HOST 'tar -xvf /path/to/target/my_application.tar.gz && sudo systemctl start my_application'
+          ssh -i temporary_key $REMOTE_USER@$REMOTE_HOST << 'EOF'
+            # Navigate to the directory with the Dockerfile
+            cd st125050-a3car
+
+            # Pull the latest Docker image
+            docker pull st125050/a3car:latest
+
+            # Stop and remove any existing container with the specified name
+            docker stop ${CONTAINER_NAME} || true
+            docker rm ${CONTAINER_NAME} || true
+
+            # Run the Docker container
+            docker run -d --name ${CONTAINER_NAME} -p 8505:8505 st125050/a3car:latest
+
+            # Check if the container is running
+            if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
+              echo "Deployment successful! The container is running."
+            else
+              echo "Deployment failed."
+              exit 1
+            fi
+          EOF
           rm -f temporary_key
