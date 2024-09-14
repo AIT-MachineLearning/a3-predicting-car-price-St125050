@@ -25,6 +25,7 @@ jobs:
 
       - name: Build Docker image
         run: |
+          cd st125050-a3car
           docker build -t st125050/a3car:latest .
 
       - name: Log in to Docker Hub
@@ -44,15 +45,33 @@ jobs:
       - name: Deploy application
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          INTERMEDIATE_HOST: bazooka.cs.ait.ac.th
+          REMOTE_USER: st125050
+          REMOTE_HOST: ml-brain.cs.ait.ac.th
           CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
         run: |
           echo "$SSH_PRIVATE_KEY" > temporary_key
           chmod 600 temporary_key
 
-          # Ensure the remote host is reachable and has SSH running
-          ssh -o StrictHostKeyChecking=no -i temporary_key $REMOTE_USER@$REMOTE_HOST << 'EOF'
+          # Create SSH config for multi-hop setup
+          echo "Host ${INTERMEDIATE_HOST}
+            User ${REMOTE_USER}
+            Hostname ${INTERMEDIATE_HOST}
+            IdentityFile ~/temporary_key
+            StrictHostKeyChecking no
+            ProxyCommand ssh -i ~/temporary_key -W %h:%p ${REMOTE_USER}@${INTERMEDIATE_HOST}
+
+          Host ${REMOTE_HOST}
+            User ${REMOTE_USER}
+            Hostname ${REMOTE_HOST}
+            IdentityFile ~/temporary_key
+            StrictHostKeyChecking no" > ~/.ssh/config
+
+          # Ensure the SSH config has proper permissions
+          chmod 600 ~/.ssh/config
+
+          # Deploy the application to the final remote host
+          ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
             # Navigate to the directory with the Dockerfile
             cd st125050-a3car
 
@@ -75,4 +94,6 @@ jobs:
             fi
           EOF
 
+          # Clean up
           rm -f temporary_key
+          rm -f ~/.ssh/config
