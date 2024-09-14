@@ -8,11 +8,10 @@ class TestCarPricePrediction(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # Load the Ridge Logistic Regression model
+        """Load the Ridge Logistic Regression model and scaler."""
         with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
             cls.ridge_model = pickle.load(file)
 
-        # Load the scaler used during model training
         with open('scaler.pkl', 'rb') as file:
             cls.scaler = pickle.load(file)
 
@@ -32,6 +31,7 @@ class TestCarPricePrediction(unittest.TestCase):
         })
         X_scaled = preprocess_data(data)
         self.assertEqual(X_scaled.shape[0], 1)  # Ensure the shape is correct
+        self.assertTrue(np.all(np.isfinite(X_scaled)))  # Check for finite values
 
     def test_predict(self):
         """Test the prediction function."""
@@ -47,11 +47,10 @@ class TestCarPricePrediction(unittest.TestCase):
             'seller_type': [1],
             'owner': [1]
         })
-        # Ensure preprocess_data is applied correctly
         preprocessed_data = preprocess_data(data)
-        # Use the ridge model for prediction
         prediction = self.ridge_model.predict(preprocessed_data)
-        self.assertIsNotNone(prediction[0])  # Ensure prediction is not None
+        self.assertEqual(prediction.shape[0], 1)  # Ensure prediction has correct shape
+        self.assertIn(prediction[0], [0, 1])  # Check that prediction is binary
 
 if __name__ == '__main__':
     unittest.main()
