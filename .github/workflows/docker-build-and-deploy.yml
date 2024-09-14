@@ -25,7 +25,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          
+         
           docker build -t st125050/a3car:latest .
 
       - name: Log in to Docker Hub
@@ -50,8 +50,12 @@ jobs:
           REMOTE_HOST: ml-brain.cs.ait.ac.th
           CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
         run: |
+          # Create SSH key file
           echo "$SSH_PRIVATE_KEY" > temporary_key
           chmod 600 temporary_key
+
+          # Ensure .ssh directory exists
+          mkdir -p ~/.ssh
 
           # Create SSH config for multi-hop setup
           echo "Host ${INTERMEDIATE_HOST}
