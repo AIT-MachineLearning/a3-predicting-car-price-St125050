@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 import pickle
 from data_processing import preprocess_data
-from models import RidgeLogisticRegression  # Import the correct class
+from mainfile import RidgeLogisticRegression  # Import the correct class
 
 class TestCarPricePrediction(unittest.TestCase):
 
