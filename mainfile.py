@@ -124,20 +124,20 @@ class LogisticRegression:
     def fit(self, X, y):
         if self.fit_intercept:
             X = self.add_intercept(X)
-        
+
         self.theta = np.zeros(X.shape[1])
-        
+
         for i in range(self.num_iterations):
             z = np.dot(X, self.theta)
             h = self.sigmoid(z)
             gradient = np.dot(X.T, (h - y)) / y.size
-            
+
             # Add regularization term to gradient
             gradient += (self.lambda_ / y.size) * self.theta
             gradient[0] -= (self.lambda_ / y.size) * self.theta[0]  # Don't regularize intercept
-            
+
             self.theta -= self.learning_rate * gradient
-            
+
             if self.verbose and i % 100 == 0:
                 print(f'Iteration {i}: loss = {self.loss(h, y)}')
 
@@ -202,20 +202,20 @@ class RidgeLogisticRegression(LogisticRegression):
     def fit(self, X, y):
         if self.fit_intercept:
             X = self.add_intercept(X)
-        
+
         self.theta = np.zeros(X.shape[1])
-        
+
         for i in range(self.num_iterations):
             z = np.dot(X, self.theta)
             h = self.sigmoid(z)
             gradient = np.dot(X.T, (h - y)) / y.size
-            
+
             # Add regularization term to gradient
             gradient += (self.lambda_ / y.size) * self.theta
             gradient[0] -= (self.lambda_ / y.size) * self.theta[0]  # Don't regularize intercept
-            
+
             self.theta -= self.learning_rate * gradient
-            
+
             if self.verbose and i % 100 == 0:
                 print(f'Iteration {i}: loss = {self.loss(h, y)}')
 
@@ -228,15 +228,15 @@ def save_model_as_pkl(model, model_name):
 def log_model(model, model_name, X_train, y_train, X_test, y_test):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    
-    with mlflow.start_run(run_name=model_name):
+
+    with mlflow.start_run(run_name=model_name) as run:
         params = {
             "learning_rate": getattr(model, "learning_rate", None),
             "num_iterations": getattr(model, "num_iterations", None),
             "lambda_": getattr(model, "lambda_", None)
         }
         mlflow.log_params({k: v for k, v in params.items() if v is not None})
-        
+
         mlflow.log_metric("accuracy", model.accuracy(y_test, y_pred))
         mlflow.log_metric("macro_precision", model.macro_precision(y_test, y_pred))
         mlflow.log_metric("macro_recall", model.macro_recall(y_test, y_pred))
@@ -244,8 +244,10 @@ def log_model(model, model_name, X_train, y_train, X_test, y_test):
         mlflow.log_metric("weighted_precision", model.weighted_precision(y_test, y_pred))
         mlflow.log_metric("weighted_recall", model.weighted_recall(y_test, y_pred))
         mlflow.log_metric("weighted_f1", model.weighted_f1(y_test, y_pred))
-        
+
         mlflow.log_artifact(f'{model_name}.pkl')
+        
+        return run.info.run_id
 
 # Initialize and train Logistic Regression model
 logistic_model = LogisticRegression(learning_rate=0.01, num_iterations=1000)
@@ -259,15 +261,15 @@ save_model_as_pkl(ridge_model, "Ridge_Logistic_Regression_Model")
 
 # Set MLflow tracking URI and experiment
 mlflow.set_tracking_uri("http://mlflow.ml.brain.cs.ait.ac.th/")
-mlflow.set_experiment("st125050a3carpred")
+mlflow.set_experiment("st125050a3car_pred")
 
 # Log models and metrics to MLflow
-log_model(logistic_model, "Logistic_Regression_Model", X_train_scaled, y_train, X_test_scaled, y_test)
-log_model(ridge_model, "Ridge_Logistic_Regression_Model", X_train_scaled, y_train, X_test_scaled, y_test)
+logistic_run_id = log_model(logistic_model, "Logistic_Regression_Model", X_train_scaled, y_train, X_test_scaled, y_test)
+ridge_run_id = log_model(ridge_model, "Ridge_Logistic_Regression_Model", X_train_scaled, y_train, X_test_scaled, y_test)
 
 def get_run_metrics(model_name):
     client = mlflow.tracking.MlflowClient()
-    experiment = client.get_experiment_by_name("st125050a3carpred")
+    experiment = client.get_experiment_by_name("st125050a3car_pred")
     runs = client.search_runs(experiment.experiment_id)
     for run in runs:
         if run.info.run_name == model_name:
@@ -296,17 +298,21 @@ from mlflow.tracking import MlflowClient
 
 client = MlflowClient()
 
-# Define model name and versions
+# Define model name
 model_name = "st125050-a3carpred"
-logistic_version = client.create_registered_model(model_name)
-ridge_version = client.create_registered_model(model_name)
+
+# Check if model already exists
+try:
+    client.get_registered_model(model_name)
+    print(f"Model '{model_name}' already exists.")
+except mlflow.exceptions.RestException:
+    client.create_registered_model(model_name)
+    print(f"Model '{model_name}' created.")
 
 # Register Logistic Regression model
-logistic_model_uri = f"runs:/{logistic_model.run_id}/model"
-client.create_model_version(model_name, logistic_model_uri, "Logistic_Regression_Model")
-client.transition_model_version_stage(name=model_name, version=logistic_version.version, stage="Staging")
+logistic_model_uri = f"runs:/{logistic_run_id}/model"
+logistic_model_version = client.create_model_version(model_name, logistic_model_uri, "Logistic_Regression_Model")
 
 # Register Ridge Logistic Regression model
-ridge_model_uri = f"runs:/{ridge_model.run_id}/model"
-client.create_model_version(model_name, ridge_model_uri, "Ridge_Logistic_Regression_Model")
-client.transition_model_version_stage(name=model_name, version=ridge_version.version, stage="Staging")
+ridge_model_uri = f"runs:/{ridge_run_id}/model"
+ridge_model_version = client.create_model_version(model_name, ridge_model_uri, "Ridge_Logistic_Regression_Model")
