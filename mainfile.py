@@ -9,7 +9,7 @@ import mlflow
 import mlflow.sklearn
 
 # Load and preprocess the data
-df = pd.read_csv('/content/Cars.csv')
+df = pd.read_csv('Cars.csv')
 
 # Data cleaning
 df.drop(columns=['torque'], inplace=True)
