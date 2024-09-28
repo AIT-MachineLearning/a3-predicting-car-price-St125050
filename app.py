@@ -1,7 +1,9 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import pickle
-
+from sklearn.preprocessing import StandardScaler
+from mainfile import RidgeLogisticRegression
 # Load the trained Ridge Logistic Regression model
 with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
     ridge_model = pickle.load(file)
