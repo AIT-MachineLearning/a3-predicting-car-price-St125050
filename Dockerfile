@@ -15,6 +15,7 @@ COPY app.py .
 COPY mainfile.py .
 COPY Ridge_Logistic_Regression_Model.pkl .
 COPY scaler.pkl .
+COPY Cars.csv .  # Copy the CSV file
 
 # Expose the port that Streamlit will run on
 EXPOSE 8505
