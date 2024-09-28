@@ -1,4 +1,4 @@
-name: Build and Deploy Docker Image
+name: CI/CD Pipeline
 
 on:
   push:
@@ -75,20 +75,11 @@ jobs:
 
           # Deploy the application to the final remote host
           ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
-            # Navigate to the directory where the application is located
-            cd st125050-a3car || exit
-
-            # Pull the latest Docker image
+            cd ~/st125050-a3car || exit
             docker pull st125050/a3car:latest
-
-            # Stop and remove any existing container with the specified name
             docker stop ${CONTAINER_NAME} || true
             docker rm ${CONTAINER_NAME} || true
-
-            # Run the Docker container
             docker run -d --name ${CONTAINER_NAME} -p 8505:8505 st125050/a3car:latest
-
-            # Check if the container is running
             if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
               echo "Deployment successful! The container is running."
             else
