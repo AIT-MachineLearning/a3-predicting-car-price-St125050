@@ -1,8 +1,6 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import mlflow
-import mlflow.sklearn
 import pickle
 
 # Load the models
