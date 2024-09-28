@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load and preprocess the data
-df = pd.read_csv('/content/Cars.csv')
+df = pd.read_csv('Cars.csv')
 
 # Data cleaning
 df.drop(columns=['torque'], inplace=True)
