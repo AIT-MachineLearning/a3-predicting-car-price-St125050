@@ -10,7 +10,8 @@ with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
     ridge_model = pickle.load(file)
 
 # Load the scaler
-scaler = StandardScaler()
+with open('scaler.pkl', 'rb') as file:
+    scaler = pickle.load(file)
 
 # Define the Streamlit app
 def main():
