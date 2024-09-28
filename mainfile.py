@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load and preprocess the data
-df = pd.read_csv('Cars.csv')
+df = pd.read_csv('Cars.csv')  # Use relative path
 
 # Data cleaning
 df.drop(columns=['torque'], inplace=True)
@@ -32,7 +32,16 @@ df['max_power'] = df['max_power'].apply(clean_data)
 df['engine'] = df['engine'].apply(clean_data)
 
 # Replace categorical values with numeric
-df['name'].replace([...], range(1, 32), inplace=True)
+brand_names = [
+    'Maruti', 'Skoda', 'Honda', 'Hyundai', 'Toyota', 'Ford', 'Renault',
+    'Mahindra', 'Tata', 'Chevrolet', 'Datsun', 'Jeep', 'Mercedes-Benz',
+    'Mitsubishi', 'Audi', 'Volkswagen', 'BMW', 'Nissan', 'Lexus',
+    'Jaguar', 'Land', 'MG', 'Volvo', 'Daewoo', 'Kia', 'Fiat', 'Force',
+    'Ambassador', 'Ashok', 'Isuzu', 'Opel'
+]
+brand_ids = list(range(1, len(brand_names) + 1))
+df['name'].replace(brand_names, brand_ids, inplace=True)
+
 df['transmission'].replace(['Manual', 'Automatic'], [1, 2], inplace=True)
 df['seller_type'].replace(['Individual', 'Dealer', 'Trustmark Dealer'], [1, 2, 3], inplace=True)
 df['fuel'].replace(['Diesel', 'Petrol', 'LPG', 'CNG'], [1, 2, 3, 4], inplace=True)
@@ -81,9 +90,11 @@ plt.xlabel('KM Driven')
 plt.ylabel('Frequency')
 plt.show()
 
+df['price_category'] = pd.cut(df['selling_price'], bins=4, labels=[0, 1, 2, 3])
 # Define features and target variable
 features = ['mileage', 'engine', 'max_power', 'km_driven', 'seats', 'fuel', 'transmission', 'seller_type', 'owner', 'name']
 X = df[features]
+# Change y to be the selling_price instead of price_category
 y = df['selling_price']
 
 # Split and scale the data
@@ -99,7 +110,7 @@ class LogisticRegression:
         self.num_iterations = num_iterations
         self.fit_intercept = fit_intercept
         self.verbose = verbose
-        self.lambda_ = lambda_
+        self.lambda_ = lambda_  # Ridge regularization parameter
 
     def add_intercept(self, X):
         intercept = np.ones((X.shape[0], 1))
@@ -121,8 +132,11 @@ class LogisticRegression:
             z = np.dot(X, self.theta)
             h = self.sigmoid(z)
             gradient = np.dot(X.T, (h - y)) / y.size
+
+            # Add regularization term to gradient
             gradient += (self.lambda_ / y.size) * self.theta
             gradient[0] -= (self.lambda_ / y.size) * self.theta[0]  # Don't regularize intercept
+
             self.theta -= self.learning_rate * gradient
 
             if self.verbose and i % 100 == 0:
@@ -139,10 +153,72 @@ class LogisticRegression:
     def accuracy(self, y_true, y_pred):
         return np.mean(y_true == y_pred)
 
+    def precision(self, y_true, y_pred, class_):
+        true_positives = np.sum((y_true == class_) & (y_pred == class_))
+        predicted_positives = np.sum(y_pred == class_)
+        return true_positives / predicted_positives if predicted_positives > 0 else 0
+
+    def recall(self, y_true, y_pred, class_):
+        true_positives = np.sum((y_true == class_) & (y_pred == class_))
+        actual_positives = np.sum(y_true == class_)
+        return true_positives / actual_positives if actual_positives > 0 else 0
+
+    def f1_score(self, y_true, y_pred, class_):
+        precision = self.precision(y_true, y_pred, class_)
+        recall = self.recall(y_true, y_pred, class_)
+        return 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+
+    def macro_precision(self, y_true, y_pred):
+        classes = np.unique(y_true)
+        return np.mean([self.precision(y_true, y_pred, c) for c in classes])
+
+    def macro_recall(self, y_true, y_pred):
+        classes = np.unique(y_true)
+        return np.mean([self.recall(y_true, y_pred, c) for c in classes])
+
+    def macro_f1(self, y_true, y_pred):
+        classes = np.unique(y_true)
+        return np.mean([self.f1_score(y_true, y_pred, c) for c in classes])
+
+    def weighted_precision(self, y_true, y_pred):
+        classes = np.unique(y_true)
+        weights = np.array([np.sum(y_true == c) / len(y_true) for c in classes])
+        return np.sum(weights * [self.precision(y_true, y_pred, c) for c in classes])
+
+    def weighted_recall(self, y_true, y_pred):
+        classes = np.unique(y_true)
+        weights = np.array([np.sum(y_true == c) / len(y_true) for c in classes])
+        return np.sum(weights * [self.recall(y_true, y_pred, c) for c in classes])
+
+    def weighted_f1(self, y_true, y_pred):
+        classes = np.unique(y_true)
+        weights = np.array([np.sum(y_true == c) / len(y_true) for c in classes])
+        return np.sum(weights * [self.f1_score(y_true, y_pred, c) for c in classes])
+
 # Define Ridge Logistic Regression class
 class RidgeLogisticRegression(LogisticRegression):
     def __init__(self, learning_rate=0.01, num_iterations=1000, fit_intercept=True, verbose=False, lambda_=0.1):
         super().__init__(learning_rate, num_iterations, fit_intercept, verbose, lambda_)
+
+    def fit(self, X, y):
+        if self.fit_intercept:
+            X = self.add_intercept(X)
+
+        self.theta = np.zeros(X.shape[1])
+
+        for i in range(self.num_iterations):
+            z = np.dot(X, self.theta)
+            h = self.sigmoid(z)
+            gradient = np.dot(X.T, (h - y)) / y.size
+
+            # Add regularization term to gradient
+            gradient += (self.lambda_ / y.size) * self.theta
+            gradient[0] -= (self.lambda_ / y.size) * self.theta[0]  # Don't regularize intercept
+
+            self.theta -= self.learning_rate * gradient
+
+            if self.verbose and i % 100 == 0:
+                print(f'Iteration {i}: loss = {self.loss(h, y)}')
 
 # Save model as pickle file
 def save_model_as_pkl(model, model_name):
@@ -158,18 +234,3 @@ save_model_as_pkl(logistic_model, "Logistic_Regression_Model")
 ridge_model = RidgeLogisticRegression(learning_rate=0.01, num_iterations=1000, lambda_=0.1)
 ridge_model.fit(X_train_scaled, y_train)
 save_model_as_pkl(ridge_model, "Ridge_Logistic_Regression_Model")
-
-# Evaluate models
-y_pred_logistic = logistic_model.predict(X_test_scaled)
-y_pred_ridge = ridge_model.predict(X_test_scaled)
-
-logistic_accuracy = logistic_model.accuracy(y_test, y_pred_logistic)
-ridge_accuracy = ridge_model.accuracy(y_test, y_pred_ridge)
-
-print("Logistic Regression Accuracy:", logistic_accuracy)
-print("Ridge Logistic Regression Accuracy:", ridge_accuracy)
-
-if logistic_accuracy > ridge_accuracy:
-    print("Logistic Regression performed better.")
-else:
-    print("Ridge Logistic Regression performed better.")
