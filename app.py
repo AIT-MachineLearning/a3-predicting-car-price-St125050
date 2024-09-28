@@ -4,6 +4,7 @@ import pandas as pd
 import pickle
 from sklearn.preprocessing import StandardScaler
 from mainfile import RidgeLogisticRegression
+
 # Load the trained Ridge Logistic Regression model
 with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
     ridge_model = pickle.load(file)
@@ -11,6 +12,14 @@ with open('Ridge_Logistic_Regression_Model.pkl', 'rb') as file:
 # Load the scaler
 with open('scaler.pkl', 'rb') as file:
     scaler = pickle.load(file)
+
+# Define the price ranges for each category
+price_ranges = {
+    0: (0, 200000),      # Category 0: Low price
+    1: (200001, 500000), # Category 1: Medium price
+    2: (500001, 1000000),# Category 2: High price
+    3: (1000001, float('inf')) # Category 3: Very high price
+}
 
 # Define the Streamlit app
 def main():
@@ -53,11 +62,16 @@ def main():
                                 transmission, seller_type, owner, brand]])
         input_data_scaled = scaler.transform(input_data)
 
-        # Predict the selling price
+        # Predict the selling price category
         prediction = ridge_model.predict(input_data_scaled)
 
+        # Get the price range based on the predicted category
+        category = int(prediction[0])
+        price_range = price_ranges.get(category, (0, 0))
+        
         # Display the prediction
-        st.success(f"Predicted Selling Price Category: {prediction[0]}")
+        st.success(f"Predicted Selling Price Category: {category}")
+        st.success(f"Estimated Selling Price Range: ₹{price_range[0]:,.2f} - ₹{price_range[1]:,.2f}")
 
 if __name__ == "__main__":
     main()
