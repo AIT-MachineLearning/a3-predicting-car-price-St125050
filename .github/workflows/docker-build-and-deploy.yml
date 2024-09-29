@@ -82,6 +82,9 @@ jobs:
             mkdir -p ~/st125050-a3-car
           EOF
 
+          # Copy docker-compose.yml to the remote host
+          scp -i temporary_key -o StrictHostKeyChecking=no docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:~/st125050-a3-car/docker-compose.yml
+
           # Test SSH connection to remote host
           ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "echo 'Connected to Remote Host'"
 
