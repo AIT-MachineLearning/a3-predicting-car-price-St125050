@@ -77,9 +77,6 @@ jobs:
           # Ensure the SSH config has proper permissions
           chmod 600 ~/.ssh/config
 
-          # Copy docker-compose.yml to the remote host
-          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' scp -o StrictHostKeyChecking=no docker-compose.yml ${REMOTE_USER}@${INTERMEDIATE_HOST}:~/st125050-a3-car/docker-compose.yml
-
           # Test SSH connection to remote host
           sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} "echo 'Connected to Intermediate Host'"
 
