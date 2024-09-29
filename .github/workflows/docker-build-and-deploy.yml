@@ -77,6 +77,11 @@ jobs:
           # Ensure the SSH config has proper permissions
           chmod 600 ~/.ssh/config
 
+          # Create necessary directories on the remote host
+          ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
+            mkdir -p ~/st125050-a3-car
+          EOF
+
           # Test SSH connection to remote host
           ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "echo 'Connected to Remote Host'"
 
@@ -84,7 +89,7 @@ jobs:
           ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
             # Pull the latest Docker image
             docker pull st125050/a3car:latest
-
+            
             # Change directory to the application directory
             cd ~/st125050-a3-car || exit
             
