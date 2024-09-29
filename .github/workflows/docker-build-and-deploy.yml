@@ -77,19 +77,14 @@ jobs:
           # Ensure the SSH config has proper permissions
           chmod 600 ~/.ssh/config
 
-          # Create necessary directories on the remote host
-          ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
-           
-          EOF
-
           # Copy docker-compose.yml to the remote host
-          scp -i temporary_key -o StrictHostKeyChecking=no docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:~/st125050-a3-car/docker-compose.yml
+          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' scp -o StrictHostKeyChecking=no docker-compose.yml ${REMOTE_USER}@${INTERMEDIATE_HOST}:~/st125050-a3-car/docker-compose.yml
 
           # Test SSH connection to remote host
-          ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "echo 'Connected to Remote Host'"
+          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} "echo 'Connected to Intermediate Host'"
 
           # Deploy the application to the final remote host
-          ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
+          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
             # Pull the latest Docker image
             docker pull st125050/a3car:latest
             
