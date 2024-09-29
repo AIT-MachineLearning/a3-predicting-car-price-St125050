@@ -37,10 +37,13 @@ jobs:
         run: docker push st125050/a3car:latest
 
   deploy:
-    needs: build-test
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Deploy application
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -74,6 +77,9 @@ jobs:
           # Ensure the SSH config has proper permissions
           chmod 600 ~/.ssh/config
 
+          # Test SSH connection to remote host
+          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} "echo 'Connected to Intermediate Host'"
+
           # Deploy the application to the final remote host
           sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
             # Change directory to the application directory
@@ -82,7 +88,7 @@ jobs:
             # Pull the latest Docker image
             docker pull st125050/a3car:latest
             
-            # Deploy using Docker Compose
+            # Deploy using docker-compose
             docker-compose down || true
             docker-compose up -d
 
