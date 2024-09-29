@@ -48,12 +48,13 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           INTERMEDIATE_HOST: bazooka.cs.ait.ac.th
+          INTERMEDIATE_HOST_PASSWORD: ${{ secrets.INTERMEDIATE_HOST_PASSWORD }}
           REMOTE_USER: st125050
           REMOTE_HOST: ml-brain.cs.ait.ac.th
           CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
         run: |
           # Create SSH key file
-          echo "$SSH_PRIVATE_KEY" > temporary_key
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > temporary_key
           chmod 600 temporary_key
 
           # Ensure .ssh directory exists
@@ -71,13 +72,19 @@ jobs:
             Hostname ${REMOTE_HOST}
             IdentityFile ~/temporary_key
             StrictHostKeyChecking no
-            ProxyCommand ssh -i ~/temporary_key -W %h:%p ${REMOTE_USER}@${INTERMEDIATE_HOST}" > ~/.ssh/config
+            ProxyCommand sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no -W %h:%p ${REMOTE_USER}@${INTERMEDIATE_HOST}" > ~/.ssh/config
 
           # Ensure the SSH config has proper permissions
           chmod 600 ~/.ssh/config
 
+          # Test SSH connection to intermediate host
+          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} "echo 'Connected to Intermediate Host'"
+
+          # Test SSH connection to remote host
+          ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "echo 'Connected to Remote Host'"
+
           # Deploy the application to the final remote host
-          ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
+          ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
             cd ~/st125050-a3car || exit
             docker pull st125050/a3car:latest
             docker stop ${CONTAINER_NAME} || true
