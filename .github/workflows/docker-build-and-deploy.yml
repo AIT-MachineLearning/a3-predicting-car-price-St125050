@@ -51,7 +51,7 @@ jobs:
           INTERMEDIATE_HOST_PASSWORD: ${{ secrets.INTERMEDIATE_HOST_PASSWORD }}
           REMOTE_USER: st125050
           REMOTE_HOST: ml-brain.cs.ait.ac.th
-          CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
+          CONTAINER_NAME: streamlit_app
         run: |
           # Create SSH key file
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > temporary_key
@@ -85,11 +85,11 @@ jobs:
 
           # Deploy the application to the final remote host
           sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
-            # Pull the latest Docker image
-            docker pull st125050/a3car:latest
-            
             # Change directory to the application directory
             cd ~/st125050-a3-car || exit
+            
+            # Pull the latest Docker image
+            docker pull st125050/a3car:latest
             
             # Deploy using docker-compose
             docker-compose down || true
