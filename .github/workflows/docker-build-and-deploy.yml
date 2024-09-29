@@ -79,7 +79,7 @@ jobs:
 
           # Create necessary directories on the remote host
           ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
-            mkdir -p ~/st125050-a3-car
+           
           EOF
 
           # Copy docker-compose.yml to the remote host
@@ -101,12 +101,15 @@ jobs:
             docker-compose up -d
 
             # Check if the containers are running
-            if [ "$(docker ps -q)" ]; then
+            if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
               echo "Deployment successful! The containers are running."
             else
               echo "Deployment failed."
               exit 1
             fi
+
+            # Get the Docker logs
+            docker logs ${CONTAINER_NAME}
           EOF
 
           # Clean up
