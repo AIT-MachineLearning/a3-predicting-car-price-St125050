@@ -86,7 +86,7 @@ jobs:
             docker pull st125050/a3car:latest
 
             # Change directory to the application directory
-            cd ~/st125050-a3car || exit
+            cd ~/st125050-a3-car || exit
             
             # Deploy using docker-compose
             docker-compose down || true
