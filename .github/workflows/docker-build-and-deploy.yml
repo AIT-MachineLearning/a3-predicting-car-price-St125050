@@ -77,9 +77,6 @@ jobs:
           # Ensure the SSH config has proper permissions
           chmod 600 $HOME/.ssh/config
 
-          # Test SSH connection to remote host
-          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} "echo 'Connected to Intermediate Host'"
-
           # Deploy the application to the final remote host
           sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
             # Change directory to the application directory
@@ -92,19 +89,16 @@ jobs:
             docker-compose down || true
             docker-compose up -d
 
-            # Check if the containers are running
+            # Check if the containers are running and get the logs
             if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
               echo "Deployment successful! The containers are running."
+              docker logs ${CONTAINER_NAME}
             else
               echo "Deployment failed."
               exit 1
             fi
-
-            # Get the Docker logs
-            docker logs ${CONTAINER_NAME}
           EOF
 
           # Clean up
           rm -f $HOME/temporary_key
           rm -f $HOME/.ssh/config
-
