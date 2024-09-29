@@ -44,36 +44,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug SSH Configuration
-        run: |
-          echo "Checking SSH configuration..."
-          echo "$SSH_PRIVATE_KEY" > temporary_key
-          chmod 600 temporary_key
-          mkdir -p ~/.ssh
-          echo "Host ${INTERMEDIATE_HOST}
-            User ${REMOTE_USER}
-            Hostname ${INTERMEDIATE_HOST}
-            IdentityFile ~/temporary_key
-            StrictHostKeyChecking no
-            ProxyCommand ssh -i ~/temporary_key -W %h:%p ${REMOTE_USER}@${INTERMEDIATE_HOST}
-
-          Host ${REMOTE_HOST}
-            User ${REMOTE_USER}
-            Hostname ${REMOTE_HOST}
-            IdentityFile ~/temporary_key
-            StrictHostKeyChecking no" > ~/.ssh/config
-          chmod 600 ~/.ssh/config
-          echo "SSH configuration:"
-          cat ~/.ssh/config
-
-      - name: Test SSH Connection to Intermediate Host
-        run: |
-          ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} "echo 'Connected to Intermediate Host'"
-
-      - name: Test SSH Connection to Remote Host
-        run: |
-          ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "echo 'Connected to Remote Host'"
-
       - name: Deploy application
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -95,13 +65,13 @@ jobs:
             Hostname ${INTERMEDIATE_HOST}
             IdentityFile ~/temporary_key
             StrictHostKeyChecking no
-            ProxyCommand ssh -i ~/temporary_key -W %h:%p ${REMOTE_USER}@${INTERMEDIATE_HOST}
 
           Host ${REMOTE_HOST}
             User ${REMOTE_USER}
             Hostname ${REMOTE_HOST}
             IdentityFile ~/temporary_key
-            StrictHostKeyChecking no" > ~/.ssh/config
+            StrictHostKeyChecking no
+            ProxyCommand ssh -i ~/temporary_key -W %h:%p ${REMOTE_USER}@${INTERMEDIATE_HOST}" > ~/.ssh/config
 
           # Ensure the SSH config has proper permissions
           chmod 600 ~/.ssh/config
