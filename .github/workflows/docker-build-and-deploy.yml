@@ -77,21 +77,24 @@ jobs:
           # Ensure the SSH config has proper permissions
           chmod 600 ~/.ssh/config
 
-          # Test SSH connection to intermediate host
-          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} "echo 'Connected to Intermediate Host'"
-
           # Test SSH connection to remote host
           ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "echo 'Connected to Remote Host'"
 
           # Deploy the application to the final remote host
           ssh -i temporary_key -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
-            cd ~/st125050-a3car || exit
+            # Pull the latest Docker image
             docker pull st125050/a3car:latest
-            docker stop ${CONTAINER_NAME} || true
-            docker rm ${CONTAINER_NAME} || true
-            docker run -d --name ${CONTAINER_NAME} -p 8505:8505 st125050/a3car:latest
-            if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
-              echo "Deployment successful! The container is running."
+
+            # Change directory to the application directory
+            cd ~/st125050-a3car || exit
+            
+            # Deploy using docker-compose
+            docker-compose down || true
+            docker-compose up -d
+
+            # Check if the containers are running
+            if [ "$(docker ps -q)" ]; then
+              echo "Deployment successful! The containers are running."
             else
               echo "Deployment failed."
               exit 1
