@@ -85,11 +85,10 @@ jobs:
             docker pull st125050/a3car:latest || { echo "Docker not found. Exiting."; exit 1; }
             
             echo "Stopping existing containers..."
-            docker stop ${CONTAINER_NAME} || true
-            docker rm ${CONTAINER_NAME} || true
+            docker compose down || true 
             
-            echo "Starting the container..."
-            docker run -d --name ${CONTAINER_NAME} st125050/a3car:latest
+            echo "Starting containers with Docker Compose..."
+            docker compose up -d 
 
             echo "Deployment initiated."
           EOF
