@@ -76,17 +76,27 @@ jobs:
 
           # Deploy the application to the final remote host
           sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
+            echo "Checking if Docker is installed..."
+            if ! command -v docker &> /dev/null
+            then
+              echo "Docker not found. Installing Docker..."
+              curl -fsSL https://get.docker.com -o get-docker.sh
+              sh get-docker.sh
+              sudo usermod -aG docker ${REMOTE_USER}
+              newgrp docker
+            fi
+
             echo "Pulling the latest Docker image..."
             docker pull st125050/a3car:latest
             
             echo "Stopping existing containers..."
-            docker compose down || true
+            docker compose down || true 
             
             echo "Starting containers with Docker Compose..."
-            docker compose up -d
+            docker compose up -d 
 
             # Check if the containers are running and get the logs
-            if [ "\$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
+            if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
               echo "Deployment successful! The containers are running."
               docker logs ${CONTAINER_NAME}
             else
