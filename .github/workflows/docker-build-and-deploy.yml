@@ -41,16 +41,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Deploy application
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           INTERMEDIATE_HOST: bazooka.cs.ait.ac.th
           INTERMEDIATE_HOST_PASSWORD: ${{ secrets.INTERMEDIATE_HOST_PASSWORD }}
           REMOTE_USER: st125050
-          REMOTE_HOST: ml-brain.cs.ait.ac.th
           CONTAINER_NAME: streamlit_app
         run: |
           # Create SSH key file
@@ -79,18 +75,15 @@ jobs:
 
           # Deploy the application to the final remote host
           sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
-            
-            
             # Pull the latest Docker image
             docker pull st125050/a3car:latest
             
-            # Deploy using Docker Compose
-            docker compose down || true
-            docker compose up -d
+            # Deploy using Docker Compose from the image
+            docker run --rm st125050/a3car:latest docker-compose up -d
 
-            # Check if the containers are running and get the logs
+            # Check if the container is running and get the logs
             if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
-              echo "Deployment successful! The containers are running."
+              echo "Deployment successful! The container is running."
               docker logs ${CONTAINER_NAME}
             else
               echo "Deployment failed."
