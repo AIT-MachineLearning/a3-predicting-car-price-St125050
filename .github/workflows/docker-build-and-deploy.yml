@@ -76,6 +76,11 @@ jobs:
 
           # Deploy the application to the final remote host
           sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
+            echo "Confirming server environment..."
+            echo "Current directory: \$(pwd)"
+            echo "Listing files:"
+            ls -al
+
             echo "Pulling the latest Docker image..."
             docker pull st125050/a3car:latest
             
