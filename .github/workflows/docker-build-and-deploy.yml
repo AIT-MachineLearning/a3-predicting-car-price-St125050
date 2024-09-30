@@ -85,8 +85,8 @@ jobs:
             docker pull st125050/a3car:latest
             
             # Deploy using Docker Compose
-            docker-compose down || true
-            docker-compose up -d
+            docker compose down || true
+            docker compose up -d
 
             # Check if the containers are running and get the logs
             if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
