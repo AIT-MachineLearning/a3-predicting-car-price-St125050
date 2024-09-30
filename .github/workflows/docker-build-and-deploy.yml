@@ -90,7 +90,7 @@ jobs:
             echo "Starting containers with Docker Compose..."
             docker compose up -d 
 
-            echo "Deployment initiated."
+            exit  # End the SSH session
           EOF
 
           # Clean up
