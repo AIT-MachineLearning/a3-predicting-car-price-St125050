@@ -76,17 +76,17 @@ jobs:
 
           # Deploy the application to the final remote host
           sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
-            echo "Changing to application directory..."
-            cd ~/st125050-a3-car
             echo "Pulling the latest Docker image..."
             docker pull st125050/a3car:latest
             
-            echo "Deploying using Docker Compose..."
+            echo "Stopping existing containers..."
             docker-compose down || true
+            
+            echo "Starting containers with Docker Compose..."
             docker-compose up -d
 
             # Check if the containers are running and get the logs
-            if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
+            if [ "\$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
               echo "Deployment successful! The containers are running."
               docker logs ${CONTAINER_NAME}
             else
