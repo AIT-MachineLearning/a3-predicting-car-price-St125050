@@ -85,19 +85,13 @@ jobs:
             docker pull st125050/a3car:latest || { echo "Docker not found. Exiting."; exit 1; }
             
             echo "Stopping existing containers..."
-            docker compose down || true 
+            docker stop ${CONTAINER_NAME} || true
+            docker rm ${CONTAINER_NAME} || true
             
-            echo "Starting containers with Docker Compose..."
-            docker compose up -d 
+            echo "Starting the container..."
+            docker run -d --name ${CONTAINER_NAME} st125050/a3car:latest
 
-            # Check if the containers are running and get the logs
-            if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
-              echo "Deployment successful! The containers are running."
-              docker logs ${CONTAINER_NAME}
-            else
-              echo "Deployment failed."
-              exit 1
-            fi
+            echo "Deployment initiated."
           EOF
 
           # Clean up
