@@ -47,7 +47,7 @@ jobs:
           INTERMEDIATE_HOST: bazooka.cs.ait.ac.th
           INTERMEDIATE_HOST_PASSWORD: ${{ secrets.INTERMEDIATE_HOST_PASSWORD }}
           REMOTE_USER: st125050
-          REMOTE_HOST: ml-brain.cs.ait.ac.th
+          REMOTE_HOST: ml.brain.cs.ait.ac.th
           CONTAINER_NAME: streamlit_app
         run: |
           # Create SSH key file
@@ -74,15 +74,15 @@ jobs:
           # Ensure the SSH config has proper permissions
           chmod 600 $HOME/.ssh/config
 
-          # Deploy the application to the final host
-          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -tt -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
+          # Deploy the application to the final remote host
+          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -tt -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << 'EOF'
             echo "Confirming server environment..."
             echo "Current directory: \$(pwd)"
             echo "Listing files:"
             ls -al
 
             echo "Pulling the latest Docker image..."
-            docker pull st125050/a3car:latest
+            docker pull st125050/a3car:latest || { echo "Docker not found. Exiting."; exit 1; }
             
             echo "Stopping existing containers..."
             docker-compose down || true 
