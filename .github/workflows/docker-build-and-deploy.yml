@@ -1,7 +1,7 @@
 # Name of this workflow
 name: CI/CD Pipeline
 
-# When this action will be triggered
+# Trigger the workflow
 on: [workflow_dispatch]
 
 jobs:
@@ -81,25 +81,19 @@ Host ${INTERMEDIATE_HOST}
     Hostname ${INTERMEDIATE_HOST}
     IdentityFile $HOME/temporary_key
     StrictHostKeyChecking no
-
-Host ${REMOTE_HOST}
-    User ${REMOTE_USER}
-    Hostname ${REMOTE_HOST}
-    IdentityFile $HOME/temporary_key
-    StrictHostKeyChecking no
-    ProxyCommand sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no -W %h:%p ${REMOTE_USER}@${INTERMEDIATE_HOST}
 EOF
 
           # Ensure the SSH config has proper permissions
           chmod 600 $HOME/.ssh/config
 
           # Deploy the application to the final remote host
-          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i $HOME/temporary_key ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
             # Pull the latest Docker image
             docker pull st125050/a3car:latest
             
-            # Deploy using Docker Compose from the image
-            docker run --rm st125050/a3car:latest docker-compose up -d
+            # Deploy using Docker Compose
+            docker-compose down || true
+            docker-compose up -d
 
             # Check if the container is running and get the logs
             if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
@@ -114,3 +108,4 @@ EOF
           # Clean up
           rm -f $HOME/temporary_key
           rm -f $HOME/.ssh/config
+
