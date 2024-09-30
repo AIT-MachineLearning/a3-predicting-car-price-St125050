@@ -1,100 +1,68 @@
-name: CI/CD Pipeline
+deploy:
+  needs: build
+  runs-on: ubuntu-latest
 
-on:
-  push:
-    branches:
-      - main
+  steps:
+    - name: Deploy application
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        INTERMEDIATE_HOST: bazooka.cs.ait.ac.th
+        INTERMEDIATE_HOST_PASSWORD: ${{ secrets.INTERMEDIATE_HOST_PASSWORD }}
+        REMOTE_USER: st125050
+        REMOTE_HOST: ml-brain.cs.ait.ac.th
+        CONTAINER_NAME: streamlit_app
+      run: |
+        # Create SSH key file
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/temporary_key
+        chmod 600 $HOME/temporary_key
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+        # Ensure .ssh directory exists
+        mkdir -p $HOME/.ssh
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+        # Create SSH config for multi-hop setup
+        echo "Host ${INTERMEDIATE_HOST}
+          User ${REMOTE_USER}
+          Hostname ${INTERMEDIATE_HOST}
+          IdentityFile $HOME/temporary_key
+          StrictHostKeyChecking no
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
+        Host ${REMOTE_HOST}
+          User ${REMOTE_USER}
+          Hostname ${REMOTE_HOST}
+          IdentityFile $HOME/temporary_key
+          StrictHostKeyChecking no
+          ProxyCommand sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no -W %h:%p ${REMOTE_USER}@${INTERMEDIATE_HOST}" > $HOME/.ssh/config
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        # Ensure the SSH config has proper permissions
+        chmod 600 $HOME/.ssh/config
 
-      - name: Build Docker image
-        run: |
-          docker build -t st125050/a3car:latest .
+        # Deploy the application to the final remote host
+        sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
+          # Print current directory and list files for debugging
+          echo "Current directory: \$(pwd)"
+          echo "Listing files:"
+          ls -al
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          echo "Changing to application directory..."
+          cd ~/st125050-a3-car || { echo "Directory not found! Exiting."; exit 1; }
 
-      - name: Push Docker image to Docker Hub
-        run: docker push st125050/a3car:latest
+          echo "Pulling the latest Docker image..."
+          docker pull st125050/a3car:latest
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
+          echo "Deploying using Docker Compose..."
+          docker-compose down || true
+          docker-compose up -d
 
-    steps:
-      - name: Deploy application
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          INTERMEDIATE_HOST: bazooka.cs.ait.ac.th
-          INTERMEDIATE_HOST_PASSWORD: ${{ secrets.INTERMEDIATE_HOST_PASSWORD }}
-          REMOTE_USER: st125050
-          REMOTE_HOST: ml-brain.cs.ait.ac.th
-          CONTAINER_NAME: streamlit_app
-        run: |
-          # Create SSH key file
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/temporary_key
-          chmod 600 $HOME/temporary_key
+          # Check if the containers are running and get the logs
+          if [ "\$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
+            echo "Deployment successful! The containers are running."
+            docker logs ${CONTAINER_NAME}
+          else
+            echo "Deployment failed."
+            exit 1
+          fi
+        EOF
 
-          # Ensure .ssh directory exists
-          mkdir -p $HOME/.ssh
-
-          # Create SSH config for multi-hop setup
-          echo "Host ${INTERMEDIATE_HOST}
-            User ${REMOTE_USER}
-            Hostname ${INTERMEDIATE_HOST}
-            IdentityFile $HOME/temporary_key
-            StrictHostKeyChecking no
-
-          Host ${REMOTE_HOST}
-            User ${REMOTE_USER}
-            Hostname ${REMOTE_HOST}
-            IdentityFile $HOME/temporary_key
-            StrictHostKeyChecking no
-            ProxyCommand sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no -W %h:%p ${REMOTE_USER}@${INTERMEDIATE_HOST}" > $HOME/.ssh/config
-
-          # Ensure the SSH config has proper permissions
-          chmod 600 $HOME/.ssh/config
-
-          # Deploy the application to the final remote host
-          sshpass -p '${{ secrets.INTERMEDIATE_HOST_PASSWORD }}' ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${INTERMEDIATE_HOST} << 'EOF'
-            echo "Changing to application directory..."
-            cd ~/st125050-a3-car || { echo "Directory not found! Exiting."; exit 1; }
-            echo "Pulling the latest Docker image..."
-            docker pull st125050/a3car:latest
-            
-            echo "Deploying using Docker Compose..."
-            docker-compose down || true
-            docker-compose up -d
-
-            # Check if the containers are running and get the logs
-            if [ "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
-              echo "Deployment successful! The containers are running."
-              docker logs ${CONTAINER_NAME}
-            else
-              echo "Deployment failed."
-              exit 1
-            fi
-          EOF
-
-          # Clean up
-          rm -f $HOME/temporary_key
-          rm -f $HOME/.ssh/config
+        # Clean up
+        rm -f $HOME/temporary_key
+        rm -f $HOME/.ssh/config
