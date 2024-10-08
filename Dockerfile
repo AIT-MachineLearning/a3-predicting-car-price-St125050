@@ -18,7 +18,7 @@ COPY scaler.pkl .
 COPY Cars.csv .
 
 # Expose the port that Streamlit will run on
-EXPOSE 8505
+EXPOSE 8501
 
 # Command to run the Streamlit app on the specified port
-CMD ["streamlit", "run", "app.py", "--server.port=8505", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
