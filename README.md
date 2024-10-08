@@ -6,7 +6,7 @@ a3-predicting-car-price-St125050 created by GitHub Classroom
 
 You can view the live demo of the application at the following link:
 
-[Car Selling Price Prediction App](https://app3.st125050.ml.brain.cs.ait.ac.th/)
+[Car Selling Price Prediction App](https://st125050.ml.brain.cs.ait.ac.th/)
 
 
 # Car Price Prediction
