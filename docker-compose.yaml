@@ -17,7 +17,7 @@ services:
       # Tell Traefik to use port 8505
       - traefik.http.services.streamlit-app.loadbalancer.server.port=8505
       # This configures your domain name
-      - traefik.http.routers.streamlit-app.rule=Host(`app3.st125050.ml.brain.cs.ait.ac.th`)  # Ensure this domain matches your DNS settings
+      - traefik.http.routers.streamlit-app.rule=Host(`app3.st125053.ml.brain.cs.ait.ac.th`) # Ensure this domain matches your DNS settings
       # Enable SSL
       - traefik.http.routers.streamlit-app.tls=true
       - traefik.http.routers.streamlit-app.tls.certresolver=production
